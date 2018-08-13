@@ -55,7 +55,7 @@ def todo(id):
 def todos():
     if not session.get('logged_in'):
         return redirect('/login')
-    cur = g.db.execute("SELECT * FROM todos")
+    cur = g.db.execute("SELECT * FROM todos where user_id = '%s'" % session['user']['id'])
     todos = cur.fetchall()
     return render_template('todos.html', todos=todos)
 
