@@ -22,15 +22,18 @@
             </tr>
         {% endfor %}
         <tr>
-            <form method="post" action="{{ url_for('todos_POST') }}">
                 <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." 
+                    form="submitNewTodo" oninvalid='this.setCustomValidity("Description cannot be empty!")' oninput='this.setCustomValidity("")' required>
                 </td>
                 <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                    <button type="submit" class="btn btn-sm btn-primary" form="submitNewTodo">Add</button>
                 </td>
-            </form>
         </tr>
     </table>
 </div>
+
+<!-- Moved the form out of <tr> element as not allowed -->
+
+<form id="submitNewTodo" method="post" action="{{ url_for('todos_POST') }}"></form>
 {% endblock %}
