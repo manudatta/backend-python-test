@@ -5,7 +5,8 @@ from flask import (
     render_template,
     request,
     session,
-    flash
+    flash,
+    jsonify
     )
 from flask_paginate import (
     Pagination,
@@ -51,10 +52,19 @@ def logout():
     return redirect('/')
 
 
-@app.route('/todo/<id>', methods=['GET'])
-def todo(id):
-    cur = g.db.execute("SELECT * FROM todos WHERE id ='%s'" % id)
-    todo = cur.fetchone()
+
+
+@app.route('/todo/<int:id>', methods=['GET'])
+@app.route('/todo/<int:id>/<string:content_type>', methods=['GET'])
+def todo(id,content_type='html'):
+    if not session.get('logged_in'):
+        return redirect('/login')
+    print content_type 
+    user_id = session['user']['id']
+    kwargs = {'user_id':user_id,'id':id}
+    todo = Todo.query.filter_by(**kwargs).first()
+    if content_type == 'json':
+        return jsonify(obj2dict(todo))
     return render_template('todo.html', todo=todo)
 
 
@@ -108,7 +118,7 @@ def todo_delete(id):
     return redirect('/todo')
 
 
-@app.route('/todo/<id>', methods=['PATCH'])
+@app.route('/todo/<int:id>', methods=['PATCH'])
 def todos_patch(id):
     if not session.get('logged_in'):
         return redirect('/login')
@@ -116,7 +126,7 @@ def todos_patch(id):
     done = request.form.get("done",None)
     if done is not None:
         done = 1 if done == u'true' else 0 
-        kwargs = {'user_id':user_id,'id':int(id)}
+        kwargs = {'user_id':user_id,'id':id}
         updatekwargs = {'done':done}
         Todo.query.filter_by(**kwargs).update(updatekwargs)
         db_session.commit()

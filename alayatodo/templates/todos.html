@@ -1,11 +1,10 @@
 {% extends "layout.html" %}
 
 {% block header %}
-<div class='col-xs-4 col-md-offset-4'>
-    <div class='pagination-page-info'>{{ pagination.info }}</div>
-</div>
-<div class='col-xs-4 col-md-offset-4'>
-    {{ pagination.links }}
+<div class='row'>
+    <div class='col-xs-4 col-xs-offset-4 col-md-offset-5'>
+        {{ pagination.links }}
+    </div>
 </div>
 {% endblock %}
 {% block content %}
@@ -14,31 +13,31 @@
     <table class="table table-striped">
         <th>#</th><th>Description</th><th>Done</th><th></th>
         {% for todo in todos %}
-            <tr>
-                <td>{{ loop.index + (pagination.page - 1) * pagination.per_page  }}</td>
-                <td>
-                    <a href="{{ url_for('todo', id=todo.id) }}">
-                       {{ todo.description }}
-                    </a>
-                </td>
-                <td>
-                    <input value="{{todo.id}}" type="checkbox" {{ todo.done|replace(False,"unchecked")|replace(True,"checked") }} >
-                </td>
+        <tr>
+            <td>{{ loop.index + (pagination.page - 1) * pagination.per_page  }}</td>
+            <td>
+                <a href="{{ url_for('todo', id=todo.id) }}">
+                    {{ todo.description }}
+                </a>
+            </td>
+            <td>
+                <input value="{{todo.id}}" type="checkbox" {{ todo.done|replace(False,"unchecked")|replace(True,"checked") }} >
+            </td>
                 <td>
                     <form method="post" action="{{ url_for('todo_delete', id=todo.id) }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
                 </td>
-            </tr>
+        </tr>
         {% endfor %}
         <tr>
-                <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." 
-                    form="submitNewTodo" oninvalid='this.setCustomValidity("Description cannot be empty!")' oninput='this.setCustomValidity("")' required>
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-sm btn-primary" form="submitNewTodo">Add</button>
-                </td>
+            <td colspan="3">
+                <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." 
+                                                                                      form="submitNewTodo" oninvalid='this.setCustomValidity("Description cannot be empty!")' oninput='this.setCustomValidity("")' required>
+            </td>
+            <td>
+                <button type="submit" class="btn btn-sm btn-primary" form="submitNewTodo">Add</button>
+            </td>
         </tr>
     </table>
 </div>
@@ -48,7 +47,14 @@
 <form id="submitNewTodo" method="post" action="{{ url_for('todos_POST') }}"></form>
 {% endblock %}
 {% block footer %}
-<div class='col-xs-4 col-md-offset-4'>
-{{ pagination.links }}
+<div class="row">
+    <div class="col-md-4 col-md-offset-4">
+        {{ pagination.info }}
+    </div>
+</div>
+<div class="row">
+    <div class='col-xs-4 col-xs-offset-4 col-md-offset-5'>
+        {{ pagination.links }}
+    </div>
 </div>
 {% endblock %}
