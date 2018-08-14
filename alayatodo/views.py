@@ -55,7 +55,8 @@ def todo(id):
 def todos():
     if not session.get('logged_in'):
         return redirect('/login')
-    cur = g.db.execute("SELECT * FROM todos where user_id = '%s'" % session['user']['id'])
+    user_id = session['user']['id']
+    cur = g.db.execute("SELECT * FROM todos where user_id = '%s'" % user_id)
     todos = cur.fetchall()
     return render_template('todos.html', todos=todos)
 
@@ -77,6 +78,23 @@ def todos_POST():
 def todo_delete(id):
     if not session.get('logged_in'):
         return redirect('/login')
-    g.db.execute("DELETE FROM todos WHERE id ='%s'" % id)
+    user_id = session['user']['id']
+    g.db.execute("DELETE FROM todos WHERE id ='%s' and user_id ='%s'" % (id,user_id) )
     g.db.commit()
     return redirect('/todo')
+
+
+@app.route('/todo/<id>', methods=['PATCH'])
+def todos_patch(id):
+    if not session.get('logged_in'):
+        return redirect('/login')
+    user_id = session['user']['id']
+    done = request.form.get("done",None)
+    print "Done->",done," type",type(done)
+    if done is not None:
+        done = 1 if done == u'true' else 0 
+        print "Done->",done," type",type(done)
+        print "UPDATE todos set done = %d WHERE id ='%s' and user_id ='%s'" % (done,id,user_id) 
+        g.db.execute("UPDATE todos set done = %d WHERE id ='%s' and user_id ='%s'" % (done,id,user_id) )
+        g.db.commit()
+    return ('', 204)
