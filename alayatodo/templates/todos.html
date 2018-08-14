@@ -22,7 +22,7 @@
                     </a>
                 </td>
                 <td>
-                    <input value="{{todo.id}}" type="checkbox" {{ todo.done|replace("0","unchecked")|replace("1","checked") }} >
+                    <input value="{{todo.id}}" type="checkbox" {{ todo.done|replace(False,"unchecked")|replace(True,"checked") }} >
                 </td>
                 <td>
                     <form method="post" action="{{ url_for('todo_delete', id=todo.id) }}">

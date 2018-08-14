@@ -8,9 +8,15 @@ from flask import (
     flash
     )
 from flask_paginate import (
-    Pagination, 
+    Pagination,
     get_page_parameter 
 )
+
+from alayatodo.models import (
+    User,
+    Todo,
+    db_session,
+    obj2dict)
 
 
 @app.route('/')
@@ -29,15 +35,12 @@ def login():
 def login_POST():
     username = request.form.get('username')
     password = request.form.get('password')
-
-    sql = "SELECT * FROM users WHERE username = '%s' AND password = '%s'";
-    cur = g.db.execute(sql % (username, password))
-    user = cur.fetchone()
+    kwargs = {'username':username,'password':password}
+    user = User.query.filter_by(**kwargs).first()
     if user:
-        session['user'] = dict(user)
+        session['user'] = obj2dict(user)
         session['logged_in'] = True
         return redirect('/todo')
-
     return redirect('/login')
 
 
@@ -61,8 +64,7 @@ def todos():
     if not session.get('logged_in'):
         return redirect('/login')
     user_id = session['user']['id']
-    cur = g.db.execute("SELECT * FROM todos where user_id = '%s'" % user_id)
-    todos = cur.fetchall()
+    todos = Todo.query.filter_by(user_id=user_id).all()
     search = False
     q = request.args.get('q')
     if q:
@@ -71,6 +73,7 @@ def todos():
     per_page = 10
     offset = (page-1)*per_page
     todos_render = todos[offset:(offset+per_page)]
+    print todos_render[0].done
     pagination = Pagination(page=page,per_page=per_page,offset=offset
                             ,bs_version=3, total=len(todos)
                             ,search=search,record_name='todos')
@@ -84,11 +87,10 @@ def todos_POST():
         return redirect('/login')
     desc =  request.form.get('description', '')
     if len(desc) > 0:
-        g.db.execute(
-            "INSERT INTO todos (user_id, description) VALUES ('%s', '%s')"
-            % (session['user']['id'], request.form.get('description', ''))
-        )
-        g.db.commit()
+        user_id = session['user']['id']
+        todo_item = Todo(user_id=user_id,description=desc)
+        db_session.add(todo_item)
+        db_session.commit()
         flash(u'Todo item successfully created','success')
     else:
         flash(u'Todo item not created. Description is requireid.','error')
@@ -100,8 +102,8 @@ def todo_delete(id):
     if not session.get('logged_in'):
         return redirect('/login')
     user_id = session['user']['id']
-    g.db.execute("DELETE FROM todos WHERE id ='%s' and user_id ='%s'" % (id,user_id) )
-    g.db.commit()
+    kwargs = {'user_id':user_id,'id':id}
+    Todo.query.filter_by(**kwargs).delete()
     flash(u'Todo successfully deleted','success')
     return redirect('/todo')
 
@@ -114,6 +116,8 @@ def todos_patch(id):
     done = request.form.get("done",None)
     if done is not None:
         done = 1 if done == u'true' else 0 
-        g.db.execute("UPDATE todos set done = %d WHERE id ='%s' and user_id ='%s'" % (done,id,user_id) )
-        g.db.commit()
+        kwargs = {'user_id':user_id,'id':int(id)}
+        updatekwargs = {'done':done}
+        Todo.query.filter_by(**kwargs).update(updatekwargs)
+        db_session.commit()
     return ('', 204)
