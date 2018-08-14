@@ -42,9 +42,15 @@
     {% endfor %}
 
     <div class="container">
+        {% block header %}{% endblock %}
+    </div>
+    <div class="container">
       <div class="row">
         {% block content %}{% endblock %}
       </div>
+    </div>
+    <div class="container">
+        {% block footer %}{% endblock %}
     </div>
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
