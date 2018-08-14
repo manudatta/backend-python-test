@@ -19,6 +19,15 @@ from alayatodo.models import (
     db_session,
     obj2dict)
 
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect('/login')
+        return f(*args, **kwargs)
+    return decorated
 
 @app.route('/')
 def home():
@@ -46,6 +55,7 @@ def login_POST():
 
 
 @app.route('/logout')
+@login_required
 def logout():
     session.pop('logged_in', None)
     session.pop('user', None)
@@ -56,10 +66,8 @@ def logout():
 
 @app.route('/todo/<int:id>', methods=['GET'])
 @app.route('/todo/<int:id>/<string:content_type>', methods=['GET'])
+@login_required
 def todo(id,content_type='html'):
-    if not session.get('logged_in'):
-        return redirect('/login')
-    print content_type 
     user_id = session['user']['id']
     kwargs = {'user_id':user_id,'id':id}
     todo = Todo.query.filter_by(**kwargs).first()
@@ -70,9 +78,8 @@ def todo(id,content_type='html'):
 
 @app.route('/todo', methods=['GET'])
 @app.route('/todo/', methods=['GET'])
+@login_required
 def todos():
-    if not session.get('logged_in'):
-        return redirect('/login')
     user_id = session['user']['id']
     todos = Todo.query.filter_by(user_id=user_id).all()
     search = False
@@ -83,7 +90,6 @@ def todos():
     per_page = 10
     offset = (page-1)*per_page
     todos_render = todos[offset:(offset+per_page)]
-    print todos_render[0].done
     pagination = Pagination(page=page,per_page=per_page,offset=offset
                             ,bs_version=3, total=len(todos)
                             ,search=search,record_name='todos')
@@ -92,9 +98,8 @@ def todos():
 
 @app.route('/todo', methods=['POST'])
 @app.route('/todo/', methods=['POST'])
+@login_required
 def todos_POST():
-    if not session.get('logged_in'):
-        return redirect('/login')
     desc =  request.form.get('description', '')
     if len(desc) > 0:
         user_id = session['user']['id']
@@ -107,21 +112,20 @@ def todos_POST():
     return redirect('/todo')
 
 
-@app.route('/todo/<id>', methods=['POST'])
+@app.route('/todo/<int:id>', methods=['POST'])
+@login_required
 def todo_delete(id):
-    if not session.get('logged_in'):
-        return redirect('/login')
     user_id = session['user']['id']
     kwargs = {'user_id':user_id,'id':id}
     Todo.query.filter_by(**kwargs).delete()
+    db_session.commit()
     flash(u'Todo successfully deleted','success')
     return redirect('/todo')
 
 
 @app.route('/todo/<int:id>', methods=['PATCH'])
+@login_required
 def todos_patch(id):
-    if not session.get('logged_in'):
-        return redirect('/login')
     user_id = session['user']['id']
     done = request.form.get("done",None)
     if done is not None:
