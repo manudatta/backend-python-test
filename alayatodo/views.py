@@ -4,7 +4,8 @@ from flask import (
     redirect,
     render_template,
     request,
-    session
+    session,
+    flash
     )
 
 
@@ -66,11 +67,16 @@ def todos():
 def todos_POST():
     if not session.get('logged_in'):
         return redirect('/login')
-    g.db.execute(
-        "INSERT INTO todos (user_id, description) VALUES ('%s', '%s')"
-        % (session['user']['id'], request.form.get('description', ''))
-    )
-    g.db.commit()
+    desc =  request.form.get('description', '')
+    if len(desc) > 0:
+        g.db.execute(
+            "INSERT INTO todos (user_id, description) VALUES ('%s', '%s')"
+            % (session['user']['id'], request.form.get('description', ''))
+        )
+        g.db.commit()
+        flash(u'Todo item successfully created','success')
+    else:
+        flash(u'Todo item not created. Description is requireid.','error')
     return redirect('/todo')
 
 
@@ -81,6 +87,7 @@ def todo_delete(id):
     user_id = session['user']['id']
     g.db.execute("DELETE FROM todos WHERE id ='%s' and user_id ='%s'" % (id,user_id) )
     g.db.commit()
+    flash(u'Todo successfully deleted','success')
     return redirect('/todo')
 
 
@@ -90,11 +97,8 @@ def todos_patch(id):
         return redirect('/login')
     user_id = session['user']['id']
     done = request.form.get("done",None)
-    print "Done->",done," type",type(done)
     if done is not None:
         done = 1 if done == u'true' else 0 
-        print "Done->",done," type",type(done)
-        print "UPDATE todos set done = %d WHERE id ='%s' and user_id ='%s'" % (done,id,user_id) 
         g.db.execute("UPDATE todos set done = %d WHERE id ='%s' and user_id ='%s'" % (done,id,user_id) )
         g.db.commit()
     return ('', 204)
